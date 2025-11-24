@@ -1,3 +1,33 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
+using MediatR;
+using Microsoft.ApplicationInsights;
+using Newtonsoft.Json;
+using Zii.Core.API.Constants;
+using Zii.Core.API.Exceptions;
+using Zii.Core.API.Extensions;
+using Zii.Core.API.Models;
+using Zii.Trip.API.Extensions;
+using Zii.Trip.API.Models.Requests;
+using Zii.Trip.API.Queries;
+using Zii.Trip.API.Services.Interfaces;
+using Zii.Trip.Common.Application.Commands.UpdateTrip;
+using Zii.Trip.Common.Application.Common.Constants;
+using Zii.Trip.Common.Application.Common.Extensions;
+using Zii.Trip.Common.Application.Common.Interfaces;
+using Zii.Trip.Common.Application.Requests;
+using Zii.Trip.Common.Domain.Models;
+using Zii.Trip.Common.Domain.ValueObjects;
+using Zii.Trip.Common.Infrastructure.Extensions;
+using Zii.Trip.Common.Generated.Models;
+using TripSearchElement = Zii.Trip.Common.Domain.ValueObjects.TripSearchElement;
+using TripStatus = Zii.Trip.Common.Domain.ValueObjects.TripStatus;
+
+namespace Zii.Trip.API.Services;
+
 public class TripService : BaseService, ITripService
 {
     private readonly IErrorFactory _errorFactory;

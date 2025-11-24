@@ -1,27 +1,48 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using Zii.Core.API.Exceptions;
+using Zii.ProfileDataAccess.Application.Queries.Profiles.GetProfileByEmail;
+using Zii.ProfileDataAccess.Application.Queries.Profiles.GetProfileById;
+using Zii.ProfileDataAccess.Application.Queries.ProfileSyncData.Get;
+using Zii.ProfileDataAccess.Application.ReadModels;
+using Zii.Trip.Common.Application.Commands.CreateBooking;
+using Zii.Trip.Common.Application.Commands.CreateTrip;
+using Zii.Trip.Common.Application.Commands.UpdateBooking;
+using Zii.Trip.Common.Application.Commands.UpdateTrip;
+using Zii.Trip.Common.Application.Common.Extensions;
+using Zii.Trip.Common.Application.Common.Interfaces;
+using Zii.Trip.Common.Application.Queries.GetBookingById;
+using Zii.Trip.Common.Application.Queries.GetGroupTravel;
+using Zii.Trip.Common.Application.Queries.GetTripBookingRelationByBookingId;
+using Zii.Trip.Common.Application.Queries.SearchTrips;
+using Zii.Trip.Common.Domain.Entities;
+using Zii.Trip.Common.Domain.Exceptions;
+using Zii.Trip.Common.Domain.ValueObjects;
+using Zii.Trip.TbfWorker.Consumer.Services;
+using Zii.Trip.TbfWorker.Helpers;
+using Zii.Trip.TripWorker.BuildingEngine.Extensions;
+using Zii.Trip.TripWorker.Shared;
+using Zii.Trip.TripWorker.Shared.Models;
+using ZiiCompanyAPIClient.Model;
+using Booking = Zii.Trip.Common.Domain.Entities.Booking;
+using TripEntity = Zii.Trip.Common.Domain.Entities.Trip;
+using TripStatus = Zii.Trip.Common.Domain.ValueObjects.TripStatus;
+
+namespace Zii.Trip.TripWorker.BuildingEngine.Services;
+
 public class TripsBuildingEngine : ITripsBuildingEngine
 {
-    private readonly ICertifyWebService _certifyService;
-    private readonly ICompanyApiEmployeeRepository _employeeRepository;
     private readonly ISender _mediatorSender;
-    private readonly TimeSpan _openEndedTripEnd = TimeSpan.FromDays(7);
-    private readonly TimeSpan _openEndedTripStart = TimeSpan.FromDays(-7);
-    private readonly ICompanyApiTravelPolicyRepository _travelPolicyRepository;
-    private readonly ITripIssuesEnforcerService _tripIssuesEnforcerService;
-    private readonly ITripRepository _tripRepository;
-    private readonly ITfbApolloConsumerService _tfbApolloConsumerService;
 
-    public TripsBuildingEngine(ISender mediatorSender, ICompanyApiEmployeeRepository employeeRepository,
-        ICertifyWebService certifyService, ICompanyApiTravelPolicyRepository travelPolicyRepository,
-        ITripIssuesEnforcerService tripIssuesEnforcerService, ITripRepository tripRepository,
-        ITfbApolloConsumerService tfbApolloConsumerService)
+    public TripsBuildingEngine(ISender mediatorSender)
     {
         _mediatorSender = mediatorSender;
-        _employeeRepository = employeeRepository;
-        _certifyService = certifyService;
-        _travelPolicyRepository = travelPolicyRepository;
-        _tripIssuesEnforcerService = tripIssuesEnforcerService;
-        _tripRepository = tripRepository;
-        _tfbApolloConsumerService = tfbApolloConsumerService;
     }
     
     private async Task<TripEntity> CreateNewTrip(

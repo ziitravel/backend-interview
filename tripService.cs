@@ -52,12 +52,15 @@ public class TripService : BaseService, ITripService
 
     public async Task<Common.Generated.Models.Trip> GetTripAsync(Guid tripId)
     {
+        //Add a try catch to avoid runtime errors and make sure to log it in case it happens.
         var trip = await _tripRepository.GetTripByIdAsync(tripId) ?? throw new ZiiNotFoundException();
         var tripMetaTripIssues = await _tripMetaRepository.GetTripMetaAsync(tripId, TripMetaKeyValues.TripIssues);
     
         var tripModel = _mapper.Map<Common.Generated.Models.Trip>(trip);
     
-        // Because we want the model to have the obt trip id set and we need to get it from meta values related to the trip entity
+        // Because we want the model to have the obt trip id set, and we need to get it from meta values related to the trip entity
+        // This is not very clear what it's doing (so we can remove that comment)
+        // Please add this logic in a method
         var bookings = trip.TripBookingRelations.Select(tbr => tbr.Booking).AsEnumerable().ToList();
         var segmentLookup = tripModel.Segments
             .Where(s => s.ExternalBookingId != null)
@@ -74,7 +77,7 @@ public class TripService : BaseService, ITripService
             {
                 continue;
             }
-    
+            //Avoid having a foreach inside a foreach for readability, we can move it outside
             var relatedSegments = segmentLookup[booking.ExternalId];
             foreach (var segment in relatedSegments)
             {
@@ -89,7 +92,7 @@ public class TripService : BaseService, ITripService
         // Here we set canceled segments in the model regardless of the trip status
         await SetCanceledSegments(tripModel, _tripRepository, trip, _mapper).ConfigureAwait(false);
     
-        // Here we set the documents at the tripModel root level given that we want every documents regardless of segment status.
+        // Here we set the documents at the tripModel root level, given that we want every document, regardless of segment status.
         await tripModel.SetTripDocuments(_tripRepository, trip).ConfigureAwait(false);
     
         tripModel.Owner ??= tripModel.Traveler;
@@ -104,10 +107,10 @@ public class TripService : BaseService, ITripService
         foreach (segment in tripModel.segments)
         {
             segment.obtTripId = trip.obtTripId
-          }
+        }
     }
     
-    
+    //This is not an async method
     private void SetCanceledSegments(Common.Generated.Models.Trip tripModel, ITripRepository tripRepo, TripEntity trip, IMapper mapper)
     {
         if (tripEntity.TripBookingRelations.Count != 0 && trip.Status == TripStatus.CanceledEnum)

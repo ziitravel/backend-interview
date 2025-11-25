@@ -36,6 +36,8 @@ using TripStatus = Zii.Trip.Common.Domain.ValueObjects.TripStatus;
 
 namespace Zii.Trip.TripWorker.BuildingEngine.Services;
 
+
+/*We need another class in order to check the status or existence of the trip */
 public class TripsBuildingEngine : ITripsBuildingEngine
 {
     private readonly ISender _mediatorSender;

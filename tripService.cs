@@ -52,6 +52,13 @@ public class TripService : BaseService, ITripService
 
     public async Task<Common.Generated.Models.Trip> GetTripAsync(Guid tripId)
     {
+        /*
+            Multiple awaits inside nested loops
+            No local try/catch to handle errors
+            The call asumes data will exist ... add null checks
+            The method has to do a single thing
+            Several helpers
+        */
         var trip = await _tripRepository.GetTripByIdAsync(tripId) ?? throw new ZiiNotFoundException();
         var tripMetaTripIssues = await _tripMetaRepository.GetTripMetaAsync(tripId, TripMetaKeyValues.TripIssues);
     
@@ -87,6 +94,10 @@ public class TripService : BaseService, ITripService
         await tripModel.SetCheckInUrl(_tripRepository);
     
         // Here we set canceled segments in the model regardless of the trip status
+        
+        /*
+            Object is not charge of its own changes
+        */
         await SetCanceledSegments(tripModel, _tripRepository, trip, _mapper).ConfigureAwait(false);
     
         // Here we set the documents at the tripModel root level given that we want every documents regardless of segment status.
@@ -107,9 +118,11 @@ public class TripService : BaseService, ITripService
           }
     }
     
-    
     private void SetCanceledSegments(Common.Generated.Models.Trip tripModel, ITripRepository tripRepo, TripEntity trip, IMapper mapper)
     {
+    /*
+        mixes sync/async incorrectly (missing async, uses await).
+    */
         if (tripEntity.TripBookingRelations.Count != 0 && trip.Status == TripStatus.CanceledEnum)
         {
             var bookingRecordId = tripEntity.TripBookingRelations[0].BookingRecordId;
@@ -127,6 +140,9 @@ public class TripService : BaseService, ITripService
         ITripRepository tripRepository,
         TripEntity tripEntity)
     {
+        /*
+            contains duplicated code patterns (latest invoice, latest itinerary).
+        */
         var bookingRecordIds = tripEntity.TripBookingRelations.Select(b => b.BookingRecordId).ToList();
         var documents = new List<CompleteDocument>();
         foreach (var bookingRecordId in bookingRecordIds)
